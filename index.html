@@ -13,13 +13,14 @@
 <style>
 :root{--bg:#0e1620;--pn:#17222e;--ln:#2a3a4b;--tx:#e8eef4;--mu:#8fa0b1;--ac:#ffd23f;--ok:#2fbf71}
 *{box-sizing:border-box}
-body{margin:0;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;background:var(--bg);color:var(--tx);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--ln)}
+body{margin:0;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;background:var(--bg);color:var(--tx);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--ln)}
+header nav{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px}
 header span{color:var(--mu)}
-main{max-width:1200px;margin:0 auto;padding:12px 16px 24px;display:grid;gap:10px}
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:8px}
-button,select,input[type=text]{font:inherit;color:var(--tx);background:#223142;border:1px solid var(--ln);border-radius:6px;padding:7px 11px}
+main{flex:1;min-height:0;width:100%;overflow:auto;padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:6px}
+button,select,input[type=text],input[type=date],input[type=number],textarea{font:inherit;color:var(--tx);background:#223142;border:1px solid var(--ln);border-radius:6px;padding:6px 10px}
 button{cursor:pointer}
 button:hover{background:#2b3e53}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
@@ -27,19 +28,42 @@ button.on{background:var(--ac);color:#111;border-color:var(--ac);font-weight:600
 button.go{background:var(--ok);border-color:var(--ok);color:#06210f;font-weight:600}
 label{color:var(--mu);display:flex;align-items:center;gap:6px}
 .sp{flex:1}
-canvas{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--ln);touch-action:none;background:#2c7a45}
+canvas{display:block;border-radius:8px;border:1px solid var(--ln);touch-action:none}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{min-width:38px;padding:7px 10px}
 #note{flex:1;min-width:220px}
 @media (max-width:600px){header span{display:none}}
-@media (pointer:coarse){button,select,input[type=text]{min-height:44px;padding:9px 14px}.chip{min-width:48px}}
-input{-webkit-user-select:text;user-select:text}
+@media (pointer:coarse){button,select,input[type=text],input[type=date],input[type=number],textarea{min-height:44px;padding:9px 14px}.chip{min-width:48px}}
+input,textarea{-webkit-user-select:text;user-select:text}
 dialog{background:var(--pn);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:14px}dialog::backdrop{background:rgba(0,0,0,.55)}
+[hidden]{display:none!important}
+.stack{display:grid;gap:10px}
+#v-pr{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}#v-pr>.bar{flex:none}
+#stage{flex:1;min-height:220px;display:flex;align-items:center;justify-content:center}
+#v-tr{flex:none}.mu{color:var(--mu)}
+.tf label.w{flex:1;min-width:240px}.tf label.w input{flex:1}
+.blk textarea{flex:1;min-width:240px;resize:vertical}.bd{color:var(--mu)}
+#pres{display:none}
+.pres header,.pres .tabs,.pres .bar,.pres #v-pr>p{display:none}
+.pres main{padding:0}
+.pres canvas{border:0;border-radius:0}
+.pres #v-pr{padding-bottom:64px}
+.pres #pres{display:flex;gap:8px;position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:8px;z-index:5}
+@media print{header,.tabs,#v-pr,#ttools,#pres,.bar button{display:none!important}body{height:auto!important;overflow:visible!important}main,#v-tr{overflow:visible!important}body{background:#fff;color:#000;-webkit-print-color-adjust:exact}.bar{background:#fff;border:1px solid #999}input,textarea{background:#fff!important;color:#000!important;border:1px solid #bbb!important}}
 </style>
 </head>
 <body>
-<header><h1>Prancheta Tática</h1><span>Monte a jogada, crie os quadros e exporte em vídeo.</span></header>
+<header><h1>Prancheta Tática</h1>
+  <nav class="tabs">
+    <button id="tab-pr" class="on" onclick="setView('board')">Prancheta</button>
+    <button id="tab-tr" onclick="setView('train')">Treinos</button>
+    <span class="sp"></span>
+    <button onclick="present()">Apresentar</button>
+    <button onclick="toggleFS()">Tela cheia</button>
+    <button onclick="$('hlp').showModal()">Ajuda</button>
+  </nav></header>
 <main>
+  <div id="v-pr" class="stack">
   <div class="bar">
     <button id="t-move" class="on" onclick="setTool('move')">Mover</button>
     <button id="t-arrow" onclick="setTool('arrow')">Desenhar seta</button>
@@ -48,13 +72,14 @@ dialog{background:var(--pn);color:var(--tx);border:1px solid var(--ln);border-ra
     <select id="col" aria-label="Cor da seta"><option value="#ffd23f">Amarela</option><option value="#ffffff">Branca</option><option value="#4cc9f0">Azul</option><option value="#ff7b54">Laranja</option><option value="#ff4d6d">Vermelha</option><option value="#111111">Preta</option></select>
     <button onclick="clearArrows()">Limpar setas</button>
     <span class="sp"></span>
+    <label>Campo <select id="fld" onchange="setField(this.value)"><option value="campo">Campo (11)</option><option value="society">Society (7)</option><option value="futsal">Futsal (5)</option></select></label>
     <label>Meu time <select id="fa" onchange="applyF('A',this.value)"></select></label>
     <label>Adversário <select id="fb" onchange="applyF('B',this.value)"></select></label>
     <label><input type="checkbox" id="showA" checked onchange="setVis()"> Meu time neste quadro</label>
     <label><input type="checkbox" id="showB" checked onchange="setVis()"> Adversário neste quadro</label>
   </div>
 
-  <canvas id="c" aria-label="Campo de futebol"></canvas>
+  <div id="stage"><canvas id="c" aria-label="Campo"></canvas></div>
 
   <div class="bar">
     <button onclick="step(-1)" aria-label="Quadro anterior">◀</button>
@@ -76,57 +101,102 @@ dialog{background:var(--pn);color:var(--tx);border:1px solid var(--ln);border-ra
     <button id="newb" onclick="newProj()">Novo</button>
     <input type="file" id="file" accept=".json" hidden>
   </div>
-  <p style="color:var(--mu);margin:0">Arraste jogadores e bola. Para setas, escolha Desenhar seta, defina tipo e cor e arraste no campo. Toque duas vezes em um jogador para trocar o número. Para mostrar só um time, desmarque o outro; em um novo quadro, marque-o de volta e ele aparece na animação. Cada quadro é uma posição: ao reproduzir, o app anima de um quadro para o outro.</p>
+</div>
+  <div id="v-tr" class="stack" hidden>
+    <div id="ttools" class="bar">
+      <select id="tsel" aria-label="Treino" onchange="S.tcur=+this.value;rtrain()"></select>
+      <button onclick="newT()">+ Novo treino</button>
+      <button onclick="twice(this,'Excluir? Clique de novo',delT)">Excluir treino</button>
+      <span class="sp"></span>
+      <button onclick="window.print()">Imprimir / salvar PDF</button>
+    </div>
+    <div id="tbody" class="stack"></div>
+  </div>
 </main>
 
+<datalist id="bnames"><option value="Aquecimento"><option value="Exercício técnico"><option value="Exercício tático"><option value="Jogo reduzido"><option value="Finalização"><option value="Jogo livre"><option value="Volta à calma"></datalist>
+<div id="pres"><button onclick="step(-1)" aria-label="Quadro anterior">◀</button><button id="pplay" class="go" onclick="play()">▶ Reproduzir</button><button onclick="step(1)" aria-label="Próximo quadro">▶</button><button onclick="endPres()">✕ Sair</button></div>
+<dialog id="hlp"><form method="dialog"><p><b>Mover:</b> arraste jogadores e a bola. Toque duas vezes em um jogador para trocar o número.</p>
+<p><b>Setas:</b> escolha Desenhar seta, defina tipo e cor e arraste no campo.</p>
+<p><b>Quadros:</b> cada quadro é uma posição. Ao reproduzir, o app anima de um quadro para o outro. Use + Novo quadro para criar o próximo.</p>
+<p><b>Campo:</b> escolha Campo, Society ou Futsal antes de montar a jogada. Ao trocar, os times são reposicionados no quadro atual.</p>
+<p><b>Um time de cada vez:</b> desmarque o outro no quadro e marque de volta no quadro seguinte.</p>
+<button>Fechar</button></form></dialog>
 <dialog id="dlg"><form method="dialog"><label>Número ou nome do jogador <input id="dv" type="text" maxlength="3" size="4"></label> <button value="ok">OK</button> <button value="x" formnovalidate>Cancelar</button></form></dialog>
 <script>
 const $=id=>document.getElementById(id);
-const W=1050,H=680,X0=30,Y0=30,PW=990,PH=620;
+const W=1050;let H=680,X0=30,Y0=30,PW=990,PH=620;
 const cv=$('c'),cx=cv.getContext('2d');cv.width=W;cv.height=H;
 
-const FM={
- '4-3-3':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.35,.3],[.33,.5],[.35,.7],[.46,.2],[.48,.5],[.46,.8]],
- '4-4-2':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.36,.12],[.36,.38],[.36,.62],[.36,.88],[.46,.38],[.46,.62]],
- '3-5-2':[[.05,.5],[.2,.25],[.2,.5],[.2,.75],[.34,.1],[.36,.3],[.33,.5],[.36,.7],[.34,.9],[.46,.4],[.46,.6]],
- '4-2-3-1':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.32,.38],[.32,.62],[.42,.2],[.43,.5],[.42,.8],[.49,.5]],
- '3-4-3':[[.05,.5],[.2,.25],[.2,.5],[.2,.75],[.34,.15],[.34,.4],[.34,.6],[.34,.85],[.46,.2],[.48,.5],[.46,.8]]
-};
-Object.keys(FM).forEach(k=>{$('fa').add(new Option(k,k));$('fb').add(new Option(k,k))});
-$('fa').value='4-3-3';$('fb').value='4-4-2';
-
-function build(fa,fb){const p={};
- FM[fa].forEach((q,i)=>p['A'+i]=[...q]);
- FM[fb].forEach((q,i)=>p['B'+i]=[1-q[0],q[1]]);
+const FD={
+ campo:{n:11,m:[105,68],cor:'#2c7a45',lis:1,def:['4-3-3','4-4-2'],fm:{
+  '4-3-3':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.35,.3],[.33,.5],[.35,.7],[.46,.2],[.48,.5],[.46,.8]],
+  '4-4-2':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.36,.12],[.36,.38],[.36,.62],[.36,.88],[.46,.38],[.46,.62]],
+  '3-5-2':[[.05,.5],[.2,.25],[.2,.5],[.2,.75],[.34,.1],[.36,.3],[.33,.5],[.36,.7],[.34,.9],[.46,.4],[.46,.6]],
+  '4-2-3-1':[[.05,.5],[.2,.15],[.2,.38],[.2,.62],[.2,.85],[.32,.38],[.32,.62],[.42,.2],[.43,.5],[.42,.8],[.49,.5]],
+  '3-4-3':[[.05,.5],[.2,.25],[.2,.5],[.2,.75],[.34,.15],[.34,.4],[.34,.6],[.34,.85],[.46,.2],[.48,.5],[.46,.8]]}},
+ society:{n:7,m:[60,40],cor:'#2f8a4e',lis:1,def:['2-3-1','3-2-1'],fm:{
+  '2-3-1':[[.06,.5],[.22,.3],[.22,.7],[.38,.18],[.4,.5],[.38,.82],[.43,.5]],
+  '3-2-1':[[.06,.5],[.2,.2],[.2,.5],[.2,.8],[.36,.35],[.36,.65],[.43,.5]],
+  '2-2-2':[[.06,.5],[.2,.3],[.2,.7],[.35,.3],[.35,.7],[.43,.35],[.43,.65]],
+  '3-1-2':[[.06,.5],[.2,.2],[.2,.5],[.2,.8],[.34,.5],[.43,.33],[.43,.67]]}},
+ futsal:{n:5,m:[40,20],cor:'#2b7a8e',lis:0,def:['1-2-1','2-2'],fm:{
+  '1-2-1':[[.06,.5],[.2,.5],[.33,.2],[.33,.8],[.42,.5]],
+  '2-2':[[.06,.5],[.22,.28],[.22,.72],[.4,.28],[.4,.72]],
+  '3-1':[[.06,.5],[.22,.2],[.22,.5],[.22,.8],[.41,.5]],
+  '4-0':[[.06,.5],[.3,.15],[.3,.38],[.3,.62],[.3,.85]]}}};
+let selField=null;
+function fillSel(){const f=FD[S.field];['fa','fb'].forEach((id,j)=>{const e=$(id);e.innerHTML='';Object.keys(f.fm).forEach(k=>e.add(new Option(k,k)));e.value=f.def[j]})}
+function build(fa,fb,fk='campo'){const f=FD[fk],ref=FD.campo.fm['4-3-3'],p={};
+ for(let i=0;i<11;i++){const a=i<f.n?f.fm[fa][i]:ref[i],b=i<f.n?f.fm[fb][i]:ref[i];p['A'+i]=[...a];p['B'+i]=[1-b[0],b[1]]}
  p.ball=[.5,.5];return p}
-const fresh=()=>({frames:[{pos:build('4-3-3','4-4-2'),arrows:[],note:'',vis:{A:1,B:1}}],cur:0,names:{}});
-function fix(d){d.frames.forEach(f=>f.vis=f.vis||{A:1,B:d.showB===false?0:1});d.names=d.names||{};return d}
+const fresh=(fk='campo')=>({frames:[{pos:build(FD[fk].def[0],FD[fk].def[1],fk),arrows:[],note:'',vis:{A:1,B:1}}],cur:0,names:{},trainings:[],tcur:0,field:fk});
+function fix(d){d.frames.forEach(f=>f.vis=f.vis||{A:1,B:d.showB===false?0:1});d.names=d.names||{};d.trainings=d.trainings||[];d.tcur=d.tcur||0;d.field=FD[d.field]?d.field:'campo';return d}
 let S=fresh(),tool='move',drag=null,tmp=null,playing=false;
 const cur=()=>S.frames[S.cur];
-const ids=(v=cur().vis)=>{const a=[];for(const t of['A','B'])if(v[t]>0)for(let i=0;i<11;i++)a.push(t+i);return a};
+const ids=(v=cur().vis)=>{const a=[];for(const t of['A','B'])if(v[t]>0)for(let i=0;i<FD[S.field].n;i++)a.push(t+i);return a};
 const label=id=>S.names[id]??(+id.slice(1)+1);
+function fit(){const s=$('stage');if(!s||!s.clientWidth||!s.clientHeight)return;const k=Math.min(s.clientWidth/W,s.clientHeight/H);cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px'}
+function setRect(){const f=FD[S.field];PW=990;X0=30;Y0=30;PH=Math.round(PW*f.m[1]/f.m[0]);H=PH+60;if(cv.height!=H)cv.height=H;fit()}
+function setField(k){if(playing)return;S.field=k;fillSel();selField=k;setRect();applyF('A',FD[k].def[0]);applyF('B',FD[k].def[1])}
+if(window.ResizeObserver)new ResizeObserver(fit).observe($('stage'));addEventListener('resize',fit);
 const toP=n=>[X0+n[0]*PW,Y0+n[1]*PH];
 const toN=p=>[Math.min(1,Math.max(0,(p[0]-X0)/PW)),Math.min(1,Math.max(0,(p[1]-Y0)/PH))];
 const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
 
 /* ---------- desenho ---------- */
 function pitch(){
- cx.fillStyle='#2c7a45';cx.fillRect(0,0,W,H);
- for(let i=0;i<10;i++){cx.fillStyle=i%2?'rgba(255,255,255,.04)':'rgba(0,0,0,.04)';cx.fillRect(X0+i*PW/10,Y0,PW/10,PH)}
- const mx=PW/105,my=PH/68;
- cx.strokeStyle='rgba(255,255,255,.85)';cx.lineWidth=3;
+ const f=FD[S.field],mx=PW/f.m[0],my=PH/f.m[1],cy=Y0+PH/2,mid=X0+PW/2;
+ cx.fillStyle=f.cor;cx.fillRect(0,0,W,H);
+ if(f.lis)for(let i=0;i<10;i++){cx.fillStyle=i%2?'rgba(255,255,255,.04)':'rgba(0,0,0,.04)';cx.fillRect(X0+i*PW/10,Y0,PW/10,PH)}
+ cx.strokeStyle='rgba(255,255,255,.85)';cx.fillStyle='#fff';cx.lineWidth=3;
  cx.strokeRect(X0,Y0,PW,PH);
- cx.beginPath();cx.moveTo(X0+PW/2,Y0);cx.lineTo(X0+PW/2,Y0+PH);cx.stroke();
- cx.beginPath();cx.ellipse(X0+PW/2,Y0+PH/2,9.15*mx,9.15*my,0,0,7);cx.stroke();
- cx.beginPath();cx.arc(X0+PW/2,Y0+PH/2,4,0,7);cx.fillStyle='#fff';cx.fill();
+ cx.beginPath();cx.moveTo(mid,Y0);cx.lineTo(mid,Y0+PH);cx.stroke();
+ const cr={campo:9.15,society:6,futsal:3}[S.field];
+ cx.beginPath();cx.ellipse(mid,cy,cr*mx,cr*my,0,0,7);cx.stroke();
+ cx.beginPath();cx.arc(mid,cy,4,0,7);cx.fill();
+ const dot=(x,y)=>{cx.beginPath();cx.arc(x,y,3,0,7);cx.fill()};
  for(const s of[0,1]){
-  const d=s?-1:1,bx=s?X0+PW:X0,cy=Y0+PH/2;
-  cx.strokeRect(s?bx-16.5*mx:bx,cy-20.15*my,16.5*mx,40.3*my);
-  cx.strokeRect(s?bx-5.5*mx:bx,cy-9.16*my,5.5*mx,18.32*my);
-  cx.strokeRect(s?bx:bx-2*mx,cy-3.66*my,2*mx,7.32*my);
-  const sx=bx+d*11*mx;cx.beginPath();cx.arc(sx,cy,3,0,7);cx.fill();
-  const a=.925;cx.beginPath();
-  cx.ellipse(sx,cy,9.15*mx,9.15*my,0,s?Math.PI-a:-a,s?Math.PI+a:a);cx.stroke();
+  const d=s?-1:1,bx=s?X0+PW:X0;
+  if(S.field=='campo'){
+   cx.strokeRect(s?bx-16.5*mx:bx,cy-20.15*my,16.5*mx,40.3*my);
+   cx.strokeRect(s?bx-5.5*mx:bx,cy-9.16*my,5.5*mx,18.32*my);
+   cx.strokeRect(s?bx:bx-2*mx,cy-3.66*my,2*mx,7.32*my);
+   const sx=bx+d*11*mx;dot(sx,cy);
+   const a=.925;cx.beginPath();cx.ellipse(sx,cy,9.15*mx,9.15*my,0,s?Math.PI-a:-a,s?Math.PI+a:a);cx.stroke();
+  }else if(S.field=='society'){
+   cx.strokeRect(s?bx-8*mx:bx,cy-12*my,8*mx,24*my);
+   cx.strokeRect(s?bx-3*mx:bx,cy-6*my,3*mx,12*my);
+   cx.strokeRect(s?bx:bx-1.5*mx,cy-2.5*my,1.5*mx,5*my);
+   dot(bx+d*7*mx,cy);
+  }else{
+   const g=1.5*my,a=cy-g,b=cy+g,r=6;
+   cx.beginPath();cx.ellipse(bx,a,r*mx,r*my,0,s?Math.PI:-Math.PI/2,s?1.5*Math.PI:0);cx.stroke();
+   cx.beginPath();cx.ellipse(bx,b,r*mx,r*my,0,s?Math.PI/2:0,s?Math.PI:Math.PI/2);cx.stroke();
+   cx.beginPath();cx.moveTo(bx+d*r*mx,a);cx.lineTo(bx+d*r*mx,b);cx.stroke();
+   cx.strokeRect(s?bx:bx-mx,cy-g,mx,2*g);
+   dot(bx+d*6*mx,cy);dot(bx+d*10*mx,cy);
+  }
  }
 }
 function arrow(a,b,st,al,c){
@@ -191,16 +261,17 @@ cv.onpointerup=()=>{if(tmp){if(Math.hypot((tmp.b[0]-tmp.a[0])*PW,(tmp.b[1]-tmp.a
  if(drag||true)save();drag=null};
 let lastTap={id:null,t:0};
 function rename(id){const d=$('dlg');$('dv').value=label(id);d.returnValue='';d.onclose=()=>{if(d.returnValue=='ok'){S.names[id]=$('dv').value.slice(0,3);draw(cur());save()}};d.showModal();$('dv').select()}
-document.onkeydown=e=>{if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;
+document.onkeydown=e=>{if(view!='board'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;
  if(e.key=='ArrowLeft')step(-1);if(e.key=='ArrowRight')step(1);if(e.key==' '){e.preventDefault();play()}};
 
 function setTool(t){tool=t;['move','arrow','erase'].forEach(k=>$('t-'+k).classList.toggle('on',k==t))}
-function applyF(team,k){FM[k].forEach((q,i)=>cur().pos[team+i]=team=='A'?[...q]:[1-q[0],q[1]]);draw(cur());save()}
+function applyF(team,k){FD[S.field].fm[k].forEach((q,i)=>cur().pos[team+i]=team=='A'?[...q]:[1-q[0],q[1]]);draw(cur());save()}
 function setVis(){cur().vis={A:$('showA').checked?1:0,B:$('showB').checked?1:0};draw(cur());save()}
 function clearArrows(){cur().arrows=[];draw(cur());save()}
 
 /* ---------- quadros ---------- */
 function ui(){
+ setRect();if(selField!=S.field){fillSel();selField=S.field}$('fld').value=S.field;
  $('chips').innerHTML=S.frames.map((f,i)=>`<button class="chip ${i==S.cur?'on':''}" onclick="go(${i})" aria-label="Quadro ${i+1}">${i+1}</button>`).join('');
  $('note').value=cur().note||'';$('showA').checked=cur().vis.A>0;$('showB').checked=cur().vis.B>0;draw(cur())}
 function go(i){if(playing)return;S.cur=i;ui();save()}
@@ -208,7 +279,7 @@ function step(d){const i=S.cur+d;if(i>=0&&i<S.frames.length)go(i)}
 function addFrame(){if(playing)return;const f=cur();
  S.frames.splice(S.cur+1,0,{pos:JSON.parse(JSON.stringify(f.pos)),arrows:[],note:'',vis:{...f.vis}});S.cur++;ui();save()}
 function delFrame(){if(playing||S.frames.length<2)return;S.frames.splice(S.cur,1);S.cur=Math.min(S.cur,S.frames.length-1);ui();save()}
-let nq=0;function newProj(){if(playing)return;const b=$('newb');if(!nq){nq=1;b.textContent='Apagar tudo? Clique de novo';setTimeout(()=>{nq=0;b.textContent='Novo'},3500);return}nq=0;b.textContent='Novo';S=fresh();ui();save()}
+let nq=0;function newProj(){if(playing)return;const b=$('newb');if(!nq){nq=1;b.textContent='Apagar prancheta? Clique de novo';setTimeout(()=>{nq=0;b.textContent='Novo'},3500);return}nq=0;b.textContent='Novo';const tr=S.trainings,tc=S.tcur;S=fresh(S.field);S.trainings=tr;S.tcur=tc;ui();save()}
 
 /* ---------- animação e vídeo ---------- */
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -216,13 +287,13 @@ const lerp=(a,b,t)=>{const p={};for(const k in a.pos)p[k]=[a.pos[k][0]+(b.pos[k]
 const anim=(ms,fn)=>new Promise(r=>{const s=performance.now();(function l(){const t=Math.min(1,(performance.now()-s)/ms);fn(t);if(!playing||t>=1)return r();requestAnimationFrame(l)})()});
 async function play(){
  if(playing){playing=false;return}
- playing=true;$('play').textContent='⏹ Parar';
+ playing=true;playLbl('⏹ Parar');
  const D=1600/+$('spd').value,fr=S.frames;
  await anim(500,()=>draw(fr[0]));
  for(let i=0;i<fr.length-1&&playing;i++){const a=fr[i],b=fr[i+1];
   await anim(D,t=>{const e=ease(t);render(lerp(a,b,e),a.arrows,1-t,t<.5?a.note:b.note,{A:a.vis.A+(b.vis.A-a.vis.A)*e,B:a.vis.B+(b.vis.B-a.vis.B)*e})})}
  if(playing)await anim(900,()=>draw(fr[fr.length-1]));
- playing=false;$('play').textContent='▶ Reproduzir';draw(cur())}
+ playing=false;playLbl('▶ Reproduzir');draw(cur())}
 async function exportVid(){
  if(playing)return;
  if(!window.MediaRecorder){alert('Este navegador não suporta gravação de vídeo. Use Chrome, Edge ou Firefox.');return}
@@ -244,6 +315,51 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileRe
  r.readAsText(f);e.target.value=''};
 function save(){try{localStorage.setItem('prancheta-tatica',JSON.stringify(S))}catch{}}
 try{const s=localStorage.getItem('prancheta-tatica');if(s){const d=JSON.parse(s);if(d.frames&&d.frames.length)S=fix(d)}}catch{}
+/* ---------- treinos, tela cheia e apresentação ---------- */
+let view='board';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const T=()=>S.trainings[S.tcur];
+const playLbl=t=>{$('play').textContent=t;$('pplay').textContent=t};
+function twice(b,txt,fn){if(b.dataset.arm){clearTimeout(+b.dataset.arm);delete b.dataset.arm;b.textContent=b.dataset.t;fn();return}
+ b.dataset.t=b.textContent;b.textContent=txt;b.dataset.arm=setTimeout(()=>{delete b.dataset.arm;b.textContent=b.dataset.t},3500)}
+function setView(v){if(playing)return;view=v;$('v-pr').hidden=v!='board';$('v-tr').hidden=v!='train';
+ $('tab-pr').classList.toggle('on',v=='board');$('tab-tr').classList.toggle('on',v=='train');if(v=='train')rtrain();else draw(cur())}
+function rtrain(){
+ const sel=$('tsel');sel.innerHTML=S.trainings.map((t,i)=>`<option value="${i}">${esc(t.title||'Treino sem título')}</option>`).join('');sel.value=S.tcur;
+ const t=T();if(!t){$('tbody').innerHTML='<p class="mu">Nenhum treino ainda. Clique em + Novo treino para montar o plano da sessão.</p>';return}
+ $('tbody').innerHTML=`<div class="bar tf">
+  <label>Título <input type="text" value="${esc(t.title)}" oninput="tf('title',this.value)"></label>
+  <label>Data <input type="date" value="${esc(t.date)}" oninput="tf('date',this.value)"></label>
+  <label>Categoria <input type="text" size="8" value="${esc(t.team)}" placeholder="Sub-11" oninput="tf('team',this.value)"></label>
+  <label class="w">Objetivo <input type="text" value="${esc(t.goal)}" placeholder="Ex.: saída de bola com os zagueiros" oninput="tf('goal',this.value)"></label></div>`+
+ t.blocks.map((b,i)=>`<div class="bar blk">
+  <input type="text" list="bnames" value="${esc(b.name)}" placeholder="Nome do bloco" oninput="tb(${i},'name',this.value)">
+  <label>Min <input type="number" min="0" max="180" style="width:76px" value="${b.min}" oninput="tb(${i},'min',+this.value||0);tot()"></label>
+  <textarea rows="2" placeholder="Descrição, regras, variações e o que observar" oninput="tb(${i},'notes',this.value)">${esc(b.notes)}</textarea>
+  <span class="bd">${b.board?b.board.frames.length+' quadro(s) anexado(s)':'Sem prancheta'}</span>
+  <button onclick="attach(${i})">Anexar prancheta atual</button>
+  ${b.board?`<button onclick="twice(this,'Substituir a prancheta atual? Clique de novo',()=>openB(${i}))">Abrir na prancheta</button>`:''}
+  <button onclick="mvB(${i},-1)" aria-label="Subir">▲</button><button onclick="mvB(${i},1)" aria-label="Descer">▼</button><button onclick="delB(${i})" aria-label="Remover bloco">✕</button></div>`).join('')+
+ `<div class="bar"><button onclick="addB()">+ Bloco</button><strong id="tot"></strong></div>`;
+ tot()}
+function tf(k,v){T()[k]=v;save();if(k=='title'){const o=$('tsel').options[S.tcur];if(o)o.text=v||'Treino sem título'}}
+function tb(i,k,v){T().blocks[i][k]=v;save()}
+function tot(){$('tot').textContent='Duração total: '+T().blocks.reduce((a,b)=>a+(b.min||0),0)+' min'}
+function newT(){S.trainings.push({title:'Novo treino',date:'',team:'',goal:'',blocks:[{name:'Aquecimento',min:15,notes:'',board:null}]});S.tcur=S.trainings.length-1;save();rtrain()}
+function delT(){S.trainings.splice(S.tcur,1);S.tcur=Math.max(0,S.tcur-1);save();rtrain()}
+function addB(){T().blocks.push({name:'',min:10,notes:'',board:null});save();rtrain()}
+function delB(i){T().blocks.splice(i,1);save();rtrain()}
+function mvB(i,d){const b=T().blocks,j=i+d;if(j<0||j>=b.length)return;[b[i],b[j]]=[b[j],b[i]];save();rtrain()}
+function attach(i){T().blocks[i].board=JSON.parse(JSON.stringify({frames:S.frames,names:S.names,field:S.field}));save();rtrain()}
+function openB(i){const bd=T().blocks[i].board;S.frames=JSON.parse(JSON.stringify(bd.frames));S.names=JSON.parse(JSON.stringify(bd.names||{}));S.field=FD[bd.field]?bd.field:'campo';S.cur=0;save();setView('board');ui()}
+const fsOn=()=>document.fullscreenElement||document.webkitFullscreenElement;
+function reqFS(){const el=document.documentElement,f=el.requestFullscreen||el.webkitRequestFullscreen;return f?Promise.resolve(f.call(el)):Promise.reject()}
+function exitFS(){const f=document.exitFullscreen||document.webkitExitFullscreen;if(f&&fsOn())f.call(document)}
+function toggleFS(){fsOn()?exitFS():reqFS().catch(()=>alert('Tela cheia indisponível neste navegador. No iPad, instale o app pela Tela de Início (Compartilhar > Adicionar à Tela de Início) ou use Apresentar.'))}
+function present(){setView('board');document.body.classList.add('pres');reqFS().catch(()=>{})}
+function endPres(){document.body.classList.remove('pres');exitFS()}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{if(!fsOn())document.body.classList.remove('pres')}));
+
 ui();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
